@@ -35,7 +35,7 @@
             if (!isset($_SESSION, $_SESSION['user'])) {
                 include_once('signin_cmp.php');
             } else {
-                include_once('profile__cmp.php.');
+                include_once('profile__cmp.php');
             }
 
             ?>

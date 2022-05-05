@@ -9,6 +9,10 @@ function renderOpportunity($profile)
 
         <form action="" class="d-flex flex-col gap" style="--gap:1rem">
             <div class="form_group d-flex justify-space"  style="--gap:1rem">
+                <label for="">Email</label>
+                <input type="text" name="email" readonly value="{$profile['email']}">
+            </div>
+            <div class="form_group d-flex justify-space"  style="--gap:1rem">
                 <label for="">Username</label>
                 <input type="text" name="username" readonly value="{$profile['username']}">
             </div>
@@ -28,5 +32,5 @@ PROFILE;
 }
 
 
-// renderOpportunity($_SESSION['user']);
-renderOpportunity(['username'=> 'someuser','occupation'=>'doctor','opportunity'=> 'meal prep']);
+renderOpportunity($_SESSION['user']);
+// renderOpportunity(['username'=> 'someuser','occupation'=>'doctor','opportunity'=> 'meal prep']);

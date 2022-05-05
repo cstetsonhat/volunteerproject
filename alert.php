@@ -41,7 +41,7 @@ function showLog($session)
 
 
     foreach ($session['LOG_CONSOLE']['message'] as $key => $message) {
-        printf("console.log('ph->log: {$key}',`%s`);", $message);
+        printf("console.log('ph->log: {$key}',`%s`);",json_encode($message));
     }
 
     unset($_SESSION['LOG_CONSOLE']);

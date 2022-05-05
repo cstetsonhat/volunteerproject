@@ -33,7 +33,7 @@ function onNoUserSessionThenRedirect()
 function signIn($data)
 {
     makeLog('message', 'Sign in triggered');
-  
+
 
     ['email' => $email, 'password' => $password] = $data;
 
@@ -58,18 +58,17 @@ function signUp($data)
         throw new Exception("User exists already, please try with a new email");
     };
 
+
     if (strcmp($password, $password_confirm) != 0) {
         throw new \Error("Password confirmation does not match");
     }
 
 
-
     //insert into the database
 
-    $result = runQuery("insert into volunteers (email, password, occupation,firstname,lastname) values (?,?,?,?,?)", 'insert_volunteer', "sssss", [$email, hash('sha256', $password), $occupation, $firstname, $lastname]);
+    $result = runQuery("insert into volunteers (email, password, occupation,firstname,lastname) values (?,?,?,?,?)", 'insert', "sssss", [$email, hash('sha256', $password), $occupation, $firstname, $lastname]);
 
     if (!isset($result) || $result <= 0) {
-        // var_dump("errors", $result);
         throw new \Error("Error: insert failed. " . mysqli_error(getMysqliConnection()));
     };
 
@@ -88,28 +87,25 @@ function signUp($data)
     header("Location", "index.php");
 }
 
+
+/**
+ * @return Array|int
+ */
 function runQuery($query, $query_type, $bind_types, $params)
 {
 
 
     switch ($query_type) {
-        case 'insert_volunteer':
+        case 'insert':
+
             // validation 
             if (!isset($query, $params, $bind_types) || strlen($bind_types) != count($params)) {
-
                 throw new \Error(sprintf('Insert error query or params invalid bind_types:%s  $params: %s', strlen($bind_types), count($params)));
             }
 
-            // ['email' => $email, 'password' => $password, 'occupation' => $occupation, 'firstname' => $firstname, 'lastname' => $lastname] = $params;
-
-
             $stmt = mysqli_prepare(getMysqliConnection(), $query);
 
-            if (
-                // !mysqli_stmt_bind_param($stmt, $bind_types, $email, hash(OPENSSL_ALGO_MD5, $password), $occupation, $firstname, $lastname)
-
-                !mysqli_stmt_bind_param($stmt, $bind_types, ...$params)
-            ) {
+            if (strlen($bind_types) > 1 && !mysqli_stmt_bind_param($stmt, $bind_types, ...$params)) {
 
                 throw new \Error(sprintf("bind error: %s  sql_error:%s", mysqli_stmt_error($stmt), mysqli_error(getMysqliConnection())));
             }
@@ -118,19 +114,20 @@ function runQuery($query, $query_type, $bind_types, $params)
                 throw new Error(mysqli_stmt_error(getMysqliConnection()));
             }
 
-            // var_dump("insert should work");
+
             return mysqli_affected_rows(getMysqliConnection());
-            // $result = mysqli_stmt_get_result($stmt);
 
-
-            // return mysqli_fetch_all($result, MYSQLI_ASSOC);
 
             break;
 
         case 'select':
             $stmt = mysqli_prepare(getMysqliConnection(), $query);
 
-            if (!mysqli_stmt_bind_param($stmt, $bind_types, ...$params) || !mysqli_stmt_execute($stmt)) {
+            if (count($params) > 0 && !mysqli_stmt_bind_param($stmt, $bind_types, ...$params)) {
+                throw new \Error(mysqli_error(getMysqliConnection()));
+            }
+
+            if (!mysqli_stmt_execute($stmt)) {
                 throw new \Error(mysqli_error(getMysqliConnection()));
             }
 
@@ -155,6 +152,7 @@ function getMysqliConnection()
     return $GLOBALS['con'];
 }
 
+
 function signUpSuccess($data)
 {
     //get data for inserted user and add to session then redirect to index
@@ -163,6 +161,7 @@ function signUpSuccess($data)
     $query_types = 'd';
     $params = ['email' => $data['email']];
 }
+
 function signOut()
 {
     unset($_SESSION['user']);
@@ -170,9 +169,43 @@ function signOut()
 }
 
 
+function addOpportunity($data)
+{
+    ['date' => $date, 'position' => $position, 'time' => $time] = $data;
+
+    $count = runQuery('insert into opportunities (position,date,time) values (?,?,?)', 'insert', 'sss', [$position, $date, $time]);
+
+    if ($count == 0) {
+        throw new Error("Opportunity was not added");
+    };
+
+    makeAlert("$count opportunity added");
+}
+
+
+function getOpportunities()
+{
+
+    try {
+
+        return runQuery('select * from opportunities limit 100', 'select', '', []);
+    } catch (\Throwable $th) {
+        makeAlert($th->getTraceAsString());
+        throw $th;
+    }
+}
+
+
 function handleAction()
 {
     // $raw_data = file_get_contents('php://input');
+
+    if (array_key_exists('action', $_REQUEST) == false) {
+        makeLog('key', ['action', $_REQUEST, array_search('action', $_REQUEST) == false]);
+        makeLog('key', 'no action provided');
+        return;
+    }
+
 
     $action = $_REQUEST['action'];
 
@@ -202,8 +235,14 @@ function handleAction()
                 header('Location', 'index.php');
                 break;
             }
+        case 'add_opportunity': {
+                addOpportunity($json_data);
+                break;
+            }
         default: {
-                makeLog('message', 'Error invalid action value provided');
+                $error = 'Error invalid action value provided: '. $action;
+                makeLog('message', $error);
+                makeAlert($error);
                 break;
             }
     }
@@ -224,5 +263,5 @@ try {
     $error = $th->getMessage();
     makeAlert($error);
     makeLog('message', $error);
-    throw $th;
+    // throw $th;
 }
