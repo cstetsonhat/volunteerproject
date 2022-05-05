@@ -1,6 +1,6 @@
 <?php
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
-$con = mysqli_connect("localhost", "root", "password", "foodbankvolunteers");
+$con = mysqli_connect("localhost", "root", "", "foodbankvolunteers");
 
 session_start();
 
