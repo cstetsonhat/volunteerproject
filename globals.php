@@ -89,7 +89,8 @@ function signUp($data)
 
 
 /**
- * @return Array|int
+ * @description return an Array set for select and return an integer update|insert|delete queries
+ * @return Array|int  
  */
 function runQuery($query, $query_type, $bind_types, $params)
 {
@@ -182,6 +183,21 @@ function addOpportunity($data)
     makeAlert("$count opportunity added");
 }
 
+function editOpportunity($data)
+{
+    //grab fields from data
+    ['date' => $date, 'position' => $position, 'time' => $time, 'id' => $id] = $data;
+
+    //execute the query and get the result
+    $successful_edits = runQuery('update opportunities set position=?, date=?, time=? where id=?;',"insert","ssss",[$position,$date,$time,$id]);
+
+    if($successful_edits == 0){
+        throw new Error('Error failed to update the specified opportunity');
+    }
+
+    makeAlert('Edit successful');
+}
+
 
 function getOpportunities()
 {
@@ -239,8 +255,12 @@ function handleAction()
                 addOpportunity($json_data);
                 break;
             }
+        case 'edit_opportunity': {
+                editOpportunity($json_data);
+                break;
+            }
         default: {
-                $error = 'Error invalid action value provided: '. $action;
+                $error = 'Error invalid action value provided: ' . $action;
                 makeLog('message', $error);
                 makeAlert($error);
                 break;
@@ -248,7 +268,8 @@ function handleAction()
     }
 }
 
-function renderOpportunities(){
+function renderOpportunities()
+{
     foreach (getOpportunities() as $key => $opportunity) {
         $output = <<<OPPORTUNITY
         <tr>
@@ -258,7 +279,7 @@ function renderOpportunities(){
         <td>{$opportunity['date']}</td>
         <td>{$opportunity['time']}</td>
         <td><button>Delete</button></td>
-        <td><a href="manage_opportunities.php?opportunity_id={$opportunity['id']}">Applications</a></td>
+        <td><a href="manage_opportunities.php?opportunity_id={$opportunity['id']}">Details</a></td>
 
         </tr>
 OPPORTUNITY;
@@ -266,8 +287,32 @@ OPPORTUNITY;
     };
 }
 
-function renderOpportunityApplications(){
-    
+function renderOpportunityApplications()
+{
+    if (!isset($_REQUEST['opportunity_id'])) {
+        return;
+    }
+
+    $volunteers = runQuery(
+        "select v.* from opportunity_applications ops_app left join volunteers v on v.id = ops_app.volunteer_id where ops_app.opportunity_id = ?",
+        "select",
+        "d",
+        [$_REQUEST['opportunity_id']]
+    );
+
+    foreach ($volunteers as $key => $volunteer) {
+        $volunteer_row = <<<VOLUNTEERROW
+            <tr>
+                <td>$key</td>
+                <td>{$volunteer['id']}</td>
+                <td>{$volunteer['firstname']} {$volunteer['lastname']}</td>
+                <td>{$volunteer['occupation']}</td>
+                <td>{$volunteer['email']}</td>
+            </tr>
+    VOLUNTEERROW;
+
+        printf($volunteer_row);
+    }
 }
 
 try {

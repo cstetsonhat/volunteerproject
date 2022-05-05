@@ -21,22 +21,43 @@
     <div class="section_opportunities d-flex flex-col">
         <form class="d-flex c-margin gap c-padding" action="manage_opportunities.php?action=add_opportunity" method="GET" style="--c-margin:1rem;--gap:3rem;--c-padding:1rem">
             <legend>New Opportunity</legend>
+
+            <?php
+            $opportunity;
+
+            if (isset($_REQUEST['opportunity_id'])) {
+                [$opportunity] = runQuery('select * from opportunities where id =?','select','d',[$_REQUEST['opportunity_id']]);
+            }
+            ?>
             <div class="form-group">
-                <label for="">Position</label><input type="text" name='position' required>
+               
+                <label for="">ID</label><input type="text" name='id' required readonly <?php isset($opportunity)? printf("value=\"%s\"",$opportunity['id']):'';?> >
+            </div>
+
+
+            <div class="form-group">
+               
+                <label for="">Position</label><input type="text" name='position' required <?php isset($opportunity)? printf("value=\"%s\"",$opportunity['position']):'';?> >
             </div>
 
             <div class="form-group">
 
-                <label for="">date</label><input type="date" name='date' required>
+                <label for="">date</label><input type="date" name='date' required  <?php isset($opportunity)? printf("value=\"%s\"",$opportunity['date']):'';?> >
             </div>
 
             <div class="form-group">
 
-                <label for="">time</label><input type="time" name='time' required>
+                <label for="">time</label><input type="time" name='time' required  <?php isset($opportunity)? printf("value=\"%s\"",$opportunity['time']):'';?> >
             </div>
 
             <div class="formg-group">
-                <button type="submit" name="action" value="add_opportunity">Add</button>
+                <?php
+
+                if (isset($_REQUEST['opportunity_id'])) {
+                    print('<button type="submit" name="action" value="edit_opportunity">edit</button>');
+                } else
+                    print(' <button type="submit" name="action" value="add_opportunity">Add</button>');
+                ?>
             </div>
 
         </form>
@@ -70,7 +91,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                <?php renderOpportunityApplications();?>
+                    <?php renderOpportunityApplications(); ?>
                 </tbody>
             </table>
         </div>
