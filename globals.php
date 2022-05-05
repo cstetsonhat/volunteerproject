@@ -268,13 +268,14 @@ function handleAction()
     }
 }
 
-function renderOpportunities()
+function renderOpportunities($opportunities)
 {
-    foreach (getOpportunities() as $key => $opportunity) {
+    foreach ($opportunities as $key => $opportunity) {
+        $index = ((int)$key)+1;
         $output = <<<OPPORTUNITY
         <tr>
 
-        <td>{$key}</td>
+        <td>{$index}</td>
         <td>{$opportunity['position']}</td>
         <td>{$opportunity['date']}</td>
         <td>{$opportunity['time']}</td>

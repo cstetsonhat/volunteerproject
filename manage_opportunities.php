@@ -63,10 +63,12 @@
         </form>
 
         <div class="opportunities_recent d-flex">
+            <?php $opportunities = getOpportunities();?>
+           
             <table>
                 <thead>
                     <tr>
-                        <td>#</td>
+                        <td># Opportunities: <?php print(count($opportunities));?></td>
                         <td>Position</td>
                         <td>Date</td>
                         <td>Time</td>
@@ -75,7 +77,7 @@
 
                 <tbody>
                     <?php
-                    renderOpportunities()
+                    renderOpportunities($opportunities)
                     ?>
                 </tbody>
             </table>
