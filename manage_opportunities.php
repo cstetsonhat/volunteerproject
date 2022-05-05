@@ -19,7 +19,7 @@
     <!-- banner help the society -->
 
     <div class="section_opportunities d-flex flex-col">
-        <form class="d-flex c-margin gap c-padding" action="manage_opportunities?action=add_opportunity" method="GET" style="--c-margin:1rem;--gap:3rem;--c-padding:1rem">
+        <form class="d-flex c-margin gap c-padding" action="manage_opportunities.php?action=add_opportunity" method="GET" style="--c-margin:1rem;--gap:3rem;--c-padding:1rem">
             <legend>New Opportunity</legend>
             <div class="form-group">
                 <label for="">Position</label><input type="text" name='position' required>
@@ -41,7 +41,7 @@
 
         </form>
 
-        <div class="opportunities_recent">
+        <div class="opportunities_recent d-flex">
             <table>
                 <thead>
                     <tr>
@@ -54,21 +54,23 @@
 
                 <tbody>
                     <?php
-                    foreach (getOpportunities() as $key => $opportunity) {
-                        $output = <<<OPPORTUNITY
-    <tr>
-    
-        <td>{$key}</td>
-        <td>{$opportunity['position']}</td>
-        <td>{$opportunity['date']}</td>
-        <td>{$opportunity['time']}</td>
-        <td><button>Delete</button></td>
-
-    </tr>
-OPPORTUNITY;
-                        printf($output);
-                    };
+                    renderOpportunities()
                     ?>
+                </tbody>
+            </table>
+
+            <table id="opportunity_applications_table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Volunteer id</th>
+                        <th>Name</th>
+                        <th>Occupation</th>
+                        <th>Email</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php renderOpportunityApplications();?>
                 </tbody>
             </table>
         </div>

@@ -248,6 +248,27 @@ function handleAction()
     }
 }
 
+function renderOpportunities(){
+    foreach (getOpportunities() as $key => $opportunity) {
+        $output = <<<OPPORTUNITY
+        <tr>
+
+        <td>{$key}</td>
+        <td>{$opportunity['position']}</td>
+        <td>{$opportunity['date']}</td>
+        <td>{$opportunity['time']}</td>
+        <td><button>Delete</button></td>
+        <td><a href="manage_opportunities.php?opportunity_id={$opportunity['id']}">Applications</a></td>
+
+        </tr>
+OPPORTUNITY;
+        printf($output);
+    };
+}
+
+function renderOpportunityApplications(){
+    
+}
 
 try {
 
