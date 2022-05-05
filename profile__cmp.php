@@ -30,4 +30,3 @@ PROFILE;
 
 // renderOpportunity($_SESSION['user']);
 renderOpportunity(['username'=> 'someuser','occupation'=>'doctor','opportunity'=> 'meal prep']);
-?>

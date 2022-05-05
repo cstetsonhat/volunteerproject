@@ -16,7 +16,7 @@
 
     <!-- banner help the society -->
 
-    <div class="banner d-flex c-height justify-center" style="--c-height:500px;">
+    <div class="banner d-flex c-height justify-center c-margin-top" style="--c-height:500px;--c-margin-top:3rem;">
         <div class="banner_img c-width" style="--c-width:50%">
             <img src="https://media.istockphoto.com/photos/group-of-volunteers-unpack-donated-items-picture-id1124307261" class="w-100 h-100" alt="">
         </div>
@@ -34,8 +34,7 @@
 
     <div class="page_content">
         <?php
-<table>
-</table>
+
 
 ?>
 

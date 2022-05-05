@@ -8,34 +8,43 @@
 function showAlert($session)
 {
 
-    if (!isset($session, $session['alert'])) {
+    if (!isset($session, $session['alert']) || count($session['alert']) == 0) {
         return;
     }
 
-    //show some the alert 
-    print("alert(\"{$session['alert']['message']}\");");
+    $messages = json_encode(implode('\n', $session['alert']['message']));
+
+    print(<<<OUTPUT
     
-    unset($session['alert']);
+    setTimeout(()=> { 
+        console.log(`%c $messages`,"background-COLOR:orange;color:black;padding:0.02rem;");
+        alert(`$messages`)
+    },300);
+
+OUTPUT
+    );
+
+
+    unset($_SESSION['alert']);
 }
 
-// showAlert([
-//     'alert' =>
-//     ['message' => 'will show any message passed to it']
-// ]);
+
 
 /**
  * @descriptiion show logs for debugging
  */
-function showLog($session){
-    if (!isset($session, $session['LOG_CONSOLE'])){
-        return ;
+function showLog($session)
+{
+    if (!isset($session, $session['LOG_CONSOLE'])) {
+        return;
     }
-  
-    $message = implode(" __ ",$session['LOG_CONSOLE']['message']);
-    
-    print("console.log(\"php_log=>\",\"{ $message}\");");
 
-    unset($session['LOG_CONSOLE']);
+
+    foreach ($session['LOG_CONSOLE']['message'] as $key => $message) {
+        printf("console.log('ph->log: {$key}',`%s`);", $message);
+    }
+
+    unset($_SESSION['LOG_CONSOLE']);
 }
 
 showAlert($_SESSION);

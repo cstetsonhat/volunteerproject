@@ -25,6 +25,10 @@ html {
   padding: var(--c-padding);
 }
 
+.c-margin-top {
+  margin-top: var(--c-margin-top);
+}
+
 .border {
   border: 1px solid;
 }
