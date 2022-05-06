@@ -189,9 +189,9 @@ function editOpportunity($data)
     ['date' => $date, 'position' => $position, 'time' => $time, 'id' => $id] = $data;
 
     //execute the query and get the result
-    $successful_edits = runQuery('update opportunities set position=?, date=?, time=? where id=?;',"insert","ssss",[$position,$date,$time,$id]);
+    $successful_edits = runQuery('update opportunities set position=?, date=?, time=? where id=?;', "insert", "ssss", [$position, $date, $time, $id]);
 
-    if($successful_edits == 0){
+    if ($successful_edits == 0) {
         throw new Error('Error failed to update the specified opportunity');
     }
 
@@ -204,11 +204,43 @@ function getOpportunities()
 
     try {
 
-        return runQuery('select * from opportunities limit 100', 'select', '', []);
+        $volunteer_id = $_SESSION['user']['id'];
+        return runQuery('SELECT opportunities.*, ( SELECT COUNT(op_aps.id) >= 1 FROM opportunity_applications op_aps WHERE op_aps.assigned_at != "" AND op_aps.id = opportunities.id ) assigned, (SELECT COUNT(_op_aps.id) from opportunity_applications _op_aps where _op_aps.volunteer_id = 1) as applied from FROM opportunities LIMIT 100; ', 'select', '', []);
     } catch (\Throwable $th) {
         makeAlert($th->getTraceAsString());
         throw $th;
     }
+}
+
+
+function applyToOpportunity($data)
+{
+    ['opportunity_id' => $opportunity_id] = $data;
+    $volunteer_id = $_SESSION['user']['id'];
+
+    $new_application_count = runQuery('insert into opportunity_applications (volunteer_id, opportunity_id) values (?,?)', 'insert', 'dd', [$volunteer_id, $opportunity_id]);
+
+    if ($new_application_count == 0) {
+        throw new Error("Error: failed to submit the application");
+    }
+
+    makeAlert("$new_application_count application submited");
+}
+
+function assignOpportunity($data)
+{
+    //update state and set the assigned at field to now()
+
+    ['opportunity_id' => $opportunity_id, 'volunteer_id' => $volunteer_id, 'assignment_value' => $assignment_temp_value] = $data;
+
+    $assignment_value = strcasecmp($assignment_temp_value, 'unassign') == 0 ? '""' : "now()";
+    $updated_assignment_count = runQuery("update opportunity_applications set assigned_at = $assignment_value where opportunity_id = ? and volunteer_id = ?", 'insert', 'dd', [$opportunity_id, $volunteer_id]);
+
+    if ($updated_assignment_count == 0) {
+        throw new Error("Error: failed to update the opportunity_application");
+    }
+
+    makeAlert("$updated_assignment_count opportunity_application updated");
 }
 
 
@@ -259,29 +291,52 @@ function handleAction()
                 editOpportunity($json_data);
                 break;
             }
+
+        case 'apply_to_opportunity': {
+                applyToOpportunity($json_data);
+                break;
+            }
+        case 'assign_opportunity': {
+                assignOpportunity($json_data);
+                break;
+            }
         default: {
-                $error = 'Error invalid action value provided: ' . $action;
-                makeLog('message', $error);
-                makeAlert($error);
+                throw new Error('Error invalid action value provided: ' . $action);
+                // makeLog('message', $error);
+                // makeAlert($error);
                 break;
             }
     }
 }
 
-function renderOpportunities($opportunities)
+function renderOpportunities($base_url, $opportunities, $show_apply_btn = false, $show_delete = false)
 {
+
+    // loop over all opportunities and make a row for each one
     foreach ($opportunities as $key => $opportunity) {
-        $index = ((int)$key)+1;
+        $index = ((int)$key) + 1;
+
+        //will be used to generate classes to style colors of rowss
+        $assigned = $opportunity['assigned'] != 0 ? 'assigned' : 'unassigned';
+
+        //code for the apply button is showsn if $show_apply_btn is true
+        $apply_btn = !$show_apply_btn ? "" : sprintf("<td><a href='opportunities.php?action=apply_to_opportunity&opportunity_id=%s'>Apply</a></td>", $opportunity['id']);
+
+        $delete_btn_html = !$show_delete ? "" : "<a href='$base_url?action=delete_opportunity&opportunity_id={$opportunity['id']}'>Delete</a>";
+
+        //generate the code for a single row
         $output = <<<OPPORTUNITY
-        <tr>
+        <tr class="opportunity_is_$assigned">
 
         <td>{$index}</td>
         <td>{$opportunity['position']}</td>
         <td>{$opportunity['date']}</td>
         <td>{$opportunity['time']}</td>
-        <td><button>Delete</button></td>
+        <td>{$assigned}</td>
+        <td>$delete_btn_html</td>
         <td><a href="manage_opportunities.php?opportunity_id={$opportunity['id']}">Details</a></td>
-
+        $apply_btn
+        
         </tr>
 OPPORTUNITY;
         printf($output);
@@ -295,13 +350,14 @@ function renderOpportunityApplications()
     }
 
     $volunteers = runQuery(
-        "select v.* from opportunity_applications ops_app left join volunteers v on v.id = ops_app.volunteer_id where ops_app.opportunity_id = ?",
+        "select v.*, case when  ops_app.assigned_at= \"\" then \"false\" else \"true\" end as assignment_value from opportunity_applications ops_app left join volunteers v on v.id = ops_app.volunteer_id where ops_app.opportunity_id = ?",
         "select",
         "d",
         [$_REQUEST['opportunity_id']]
     );
 
     foreach ($volunteers as $key => $volunteer) {
+        $assignment_label = $volunteer['assignment_value'] == 'false' ? 'Assign' : 'Unassign';
         $volunteer_row = <<<VOLUNTEERROW
             <tr>
                 <td>$key</td>
@@ -309,6 +365,7 @@ function renderOpportunityApplications()
                 <td>{$volunteer['firstname']} {$volunteer['lastname']}</td>
                 <td>{$volunteer['occupation']}</td>
                 <td>{$volunteer['email']}</td>
+                <td><a href="manage_opportunities.php?action=assign_opportunity&volunteer_id={$volunteer['id']}&opportunity_id={$_REQUEST['opportunity_id']}&assignment_value={$assignment_label}">{$assignment_label}</a></td>
             </tr>
     VOLUNTEERROW;
 

@@ -62,6 +62,14 @@ html {
 
 /* block/elements */
 
+#manage_opportunities {
+  background-color: rgba(194, 74, 74, 0.219);
+}
+
+.opportunity_is_assigned {
+  background-color: rgba(91, 91, 201, 0.623);
+}
+
 .nav-links {
   list-style: none;
 }

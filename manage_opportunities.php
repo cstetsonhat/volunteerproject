@@ -18,7 +18,7 @@
 
     <!-- banner help the society -->
 
-    <div class="section_opportunities d-flex flex-col">
+    <div class="section_opportunities d-flex flex-col c-padding" style="--c-padding:1rem 6rem">
         <form class="d-flex c-margin gap c-padding" action="manage_opportunities.php?action=add_opportunity" method="GET" style="--c-margin:1rem;--gap:3rem;--c-padding:1rem">
             <legend>New Opportunity</legend>
 
@@ -62,22 +62,23 @@
 
         </form>
 
-        <div class="opportunities_recent d-flex">
+        <div class="opportunities_recent d-flex justify-between gap" style="--gap:1rem;">
             <?php $opportunities = getOpportunities();?>
            
-            <table>
+            <table id="manage_opportunities">
                 <thead>
                     <tr>
                         <td># Opportunities: <?php print(count($opportunities));?></td>
                         <td>Position</td>
                         <td>Date</td>
                         <td>Time</td>
+                        <td>Assigned</td>
                     </tr>
                 </thead>
 
                 <tbody>
                     <?php
-                    renderOpportunities($opportunities)
+                    renderOpportunities("manage_opportunities.php",$opportunities,false,true)
                     ?>
                 </tbody>
             </table>

@@ -1,3 +1,5 @@
+<?php include_once('globals.php'); ?>
+
 <nav class="d-flex w-100 border justify-space">
     <a href="index.php">
         <span class="logo">logo</span>

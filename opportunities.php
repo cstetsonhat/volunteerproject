@@ -16,11 +16,25 @@
 
 
 
-    <div class="page_content">
-        <?php
+    <div class="page_content d-flex justify-center c-m-t" style="--c-m-t:3rem">
+        <?php $opportunities = getOpportunities(); ?>
 
+        <table id="manage_opportunities">
+            <thead>
+                <tr>
+                    <td># Opportunities: <?php print(count($opportunities)); ?></td>
+                    <td>Position</td>
+                    <td>Date</td>
+                    <td>Time</td>
+                    <td>Assigned</td>
+                </tr>
+            </thead>
 
-        ?>
+            <tbody>
+                <?php
+                renderOpportunities("opportunities.php",$opportunities, true,false)
+                ?>
+            </tbody>
 
     </div>
 
