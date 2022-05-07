@@ -12,17 +12,14 @@ function renderOpportunity($profile)
                 <label for="">Email</label>
                 <input type="text" name="email" readonly value="{$profile['email']}">
             </div>
-            <div class="form_group d-flex justify-space"  style="--gap:1rem">
-                <label for="">Username</label>
-                <input type="text" name="username" readonly value="{$profile['username']}">
-            </div>
+          
             <div class="form_group d-flex justify-space"  style="--gap:1rem">
                 <label for="">Occupation</label>
                 <input type="text" name="occupation" readonly value="{$profile['occupation']}">
             </div>
             <div class="form_group d-flex justify-space"  style="--gap:1rem">
-                <label for="">Opportunity</label>
-                <input type="text" name="opportunity" readonly value="{$profile['opportunity']}">
+                <label for="">V. Position</label>
+                <input type="text" name="opportunity" readonly value="{$profile['position']}">
             </div>
         </form>
     </div>

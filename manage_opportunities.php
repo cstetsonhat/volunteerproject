@@ -15,6 +15,8 @@
 
     <?php include_once('navbar.php') ?>
 
+    <?php redirect_if_no_position();?>
+
 
     <!-- banner help the society -->
 
@@ -68,11 +70,12 @@
             <table id="manage_opportunities">
                 <thead>
                     <tr>
-                        <td># Opportunities: <?php print(count($opportunities));?></td>
-                        <td>Position</td>
-                        <td>Date</td>
-                        <td>Time</td>
-                        <td>Assigned</td>
+                        <th># Opportunities: <?php print(count($opportunities));?></th>
+                        <th>Position</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Applications</th>
+                        <th>Assigned</th>
                     </tr>
                 </thead>
 

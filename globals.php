@@ -25,10 +25,19 @@ function  makeAlert($message)
 
 function onNoUserSessionThenRedirect()
 {
-    if (!isset($_SESSION, $_SESSION['user'])) {
-        header("Location", "index.php");
+    if (isset($_SESSION, $_SESSION['user'])) {
+        header("Location:index.php");
     }
 }
+
+
+function redirect_if_no_position()
+{
+    if (!isset($_SESSION, $_SESSION['user']) || strlen($_SESSION['user']['position']) == 0) {
+        header("Location: index.php");
+    }
+}
+
 
 function signIn($data)
 {
@@ -37,7 +46,20 @@ function signIn($data)
 
     ['email' => $email, 'password' => $password] = $data;
 
-    [$user] = runQuery("select * from volunteers where email=? and password=?", 'select', 'ss', [$email, hash('sha256', $password)]);
+    $query = <<<SIGN_IN
+            SELECT
+            v.*,
+            op.position position
+        FROM
+            volunteers v
+        LEFT JOIN opportunity_applications op_aps ON
+            op_aps.volunteer_id = v.id and op_aps.assigned_at not in ('')
+        LEFT JOIN opportunities op ON
+            op.id = op_aps.opportunity_id
+        WHERE
+            email = ? and password = ?;
+    SIGN_IN;
+    [$user] = runQuery($query, 'select', 'ss', [$email, hash('sha256', $password)]);
 
     if (!isset($user)) {
         throw new Error('Invalid credentials');
@@ -84,7 +106,7 @@ function signUp($data)
     $_SESSION['user'] = $user;
 
     //go to login page
-    header("Location", "index.php");
+    header("Location: index.php");
 }
 
 
@@ -99,14 +121,15 @@ function runQuery($query, $query_type, $bind_types, $params)
     switch ($query_type) {
         case 'insert':
 
-            // validation 
+            // check that list of bindings specified and list of parameters are the same
             if (!isset($query, $params, $bind_types) || strlen($bind_types) != count($params)) {
-                throw new \Error(sprintf('Insert error query or params invalid bind_types:%s  $params: %s', strlen($bind_types), count($params)));
+                throw new \Error(sprintf('Error: query or params invalid bind_types:%s  $params: %s', strlen($bind_types), count($params)));
             }
 
             $stmt = mysqli_prepare(getMysqliConnection(), $query);
 
-            if (strlen($bind_types) > 1 && !mysqli_stmt_bind_param($stmt, $bind_types, ...$params)) {
+            //bind parameters if binding types is specified with a length >= 1
+            if (strlen($bind_types) >= 1 && !mysqli_stmt_bind_param($stmt, $bind_types, ...$params)) {
 
                 throw new \Error(sprintf("bind error: %s  sql_error:%s", mysqli_stmt_error($stmt), mysqli_error(getMysqliConnection())));
             }
@@ -198,6 +221,35 @@ function editOpportunity($data)
     makeAlert('Edit successful');
 }
 
+function deleteOpportunity($data)
+{
+    //grab fields from data
+    ['opportunity_id' => $id] = $data;
+
+    //execute the query and get the result
+    $deleted_opportunities_count = runQuery('delete from opportunities where id=?', "insert", "s", [$id]);
+
+    if ($deleted_opportunities_count == 0) {
+        throw new Error('Error failed to update the specified opportunity');
+    }
+
+
+
+    //get number of applications for the given opportunity id
+    [$applications] = runQuery("select count(*) from opportunity_applications where opportunity_id = ?", 'select', 'd', [$id]);
+
+    if ($applications > 0) {
+        //delete applications if any found
+        $successful_edits = runQuery('delete from opportunity_applications where opportunity_id=?', "insert", "d", [$id]);
+
+        makeAlert(" $successful_edits opportunities also  deleted");
+    }
+
+    makeAlert("\n$deleted_opportunities_count successful deletes");
+
+    header("Location: manage_opportunities.php");
+}
+
 
 function getOpportunities()
 {
@@ -205,7 +257,17 @@ function getOpportunities()
     try {
 
         $volunteer_id = $_SESSION['user']['id'];
-        return runQuery('SELECT opportunities.*, ( SELECT COUNT(op_aps.id) >= 1 FROM opportunity_applications op_aps WHERE op_aps.assigned_at != "" AND op_aps.id = opportunities.id ) assigned, (SELECT COUNT(_op_aps.id) from opportunity_applications _op_aps where _op_aps.volunteer_id = 1) as applied from FROM opportunities LIMIT 100; ', 'select', '', []);
+        $query = <<<GET_OPS
+                SELECT 
+                    opportunities.*, 
+                    (SELECT COUNT(op_aps.id) >= 1 FROM opportunity_applications op_aps WHERE op_aps.assigned_at != "" AND op_aps.opportunity_id = opportunities.id ) assigned,
+                    (SELECT COUNT(_op_aps.id) from opportunity_applications _op_aps where _op_aps.volunteer_id = ?) as applied ,
+                    (SELECT COUNT(op_aps.id) from opportunity_applications op_aps where op_aps.opportunity_id = opportunities.id) as applications ,
+                    (SELECT COUNT(op_aps.id) >= 1 FROM opportunity_applications op_aps WHERE op_aps.assigned_at != "" AND op_aps.opportunity_id = opportunities.id and op_aps.volunteer_id=? ) assigned_to_me
+                FROM opportunities 
+                LIMIT 100; 
+        GET_OPS;
+        return runQuery($query, 'select', 'dd', [$volunteer_id, $volunteer_id]);
     } catch (\Throwable $th) {
         makeAlert($th->getTraceAsString());
         throw $th;
@@ -280,7 +342,7 @@ function handleAction()
             }
         case 'sign_out': {
                 unset($_SESSION['user']);
-                header('Location', 'index.php');
+                header('Location: index.php');
                 break;
             }
         case 'add_opportunity': {
@@ -289,6 +351,10 @@ function handleAction()
             }
         case 'edit_opportunity': {
                 editOpportunity($json_data);
+                break;
+            }
+        case 'delete_opportunity': {
+                deleteOpportunity($json_data);
                 break;
             }
 
@@ -324,6 +390,7 @@ function renderOpportunities($base_url, $opportunities, $show_apply_btn = false,
 
         $delete_btn_html = !$show_delete ? "" : "<a href='$base_url?action=delete_opportunity&opportunity_id={$opportunity['id']}'>Delete</a>";
 
+        $assigned_to_me = $opportunity['assigned_to_me'] ? '<span class="assigned_to_me"></span>' : "";
         //generate the code for a single row
         $output = <<<OPPORTUNITY
         <tr class="opportunity_is_$assigned">
@@ -332,7 +399,8 @@ function renderOpportunities($base_url, $opportunities, $show_apply_btn = false,
         <td>{$opportunity['position']}</td>
         <td>{$opportunity['date']}</td>
         <td>{$opportunity['time']}</td>
-        <td>{$assigned}</td>
+        <td>{$opportunity['applications']}</td>
+        <td>{$assigned} $assigned_to_me</td>
         <td>$delete_btn_html</td>
         <td><a href="manage_opportunities.php?opportunity_id={$opportunity['id']}">Details</a></td>
         $apply_btn

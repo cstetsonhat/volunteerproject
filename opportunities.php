@@ -26,6 +26,7 @@
                     <td>Position</td>
                     <td>Date</td>
                     <td>Time</td>
+                    <td>Applications</td>
                     <td>Assigned</td>
                 </tr>
             </thead>
@@ -37,6 +38,8 @@
             </tbody>
 
     </div>
+
+    <?php include_once("footer.php")?>
 
 </body>
 

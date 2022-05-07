@@ -82,3 +82,19 @@ html {
   border-radius: 5px;
   padding: 0.6rem 2rem;
 }
+
+
+td,th {
+  padding: 0.2rem 1rem;
+
+}
+
+
+.assigned_to_me {
+  border: 1px solid;
+  width: 10px;
+  height: 10px;
+  display: inline-block;
+  background: blue;
+  border-radius: 50%;
+}
