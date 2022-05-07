@@ -1,3 +1,10 @@
+<!-- /**
+ * @author [Cathleen Stetson, IT4400, Final Project]
+ * @email [cpm4bf@virginia.edu]
+ * @create date 2022-05-06 18:54:44
+ * @modify date 2022-05-06 18:55:47
+ */ -->
+
 <form action="signup.php?action=sign_up" method="POST" name="form_signin" class="d-flex flex-col c-m-t gap border c-padding" style="--c-m-t:3rem;--gap:1rem;--c-padding: 0.8rem">
 
     <div class="form_input d-flex justify-between">
